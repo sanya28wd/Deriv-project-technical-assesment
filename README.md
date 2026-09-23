@@ -36,6 +36,6 @@ Questions with no lexical overlap against any indexed chunk are deterministicall
 
 ## Browser UI
 
-Run `python3 web.py`, then open <http://127.0.0.1:8000>. The UI runs the same retrieval, grounded generation, and citation-validation flow for each question. Use `Ctrl+C` in the terminal to stop it.
+Run `python3 web.py`, then open <http://127.0.0.1:8000>. If that port is already in use, run `python3 web.py --port 8001` and open <http://127.0.0.1:8001>. The UI runs the same retrieval, grounded generation, and citation-validation flow for each question. It also displays index status, support/validation status, citation count, similarity metrics, and ranked source evidence. Use `Ctrl+C` in the terminal to stop it.
 
 The latest fixture evaluation is summarized in [RESULTS.md](RESULTS.md).

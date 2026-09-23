@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from argparse import ArgumentParser
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -33,6 +34,7 @@ MAX_REQUEST_BYTES: int = 16_384
 class AssistantContext:
     """Read-only runtime data used by the HTTP interface."""
 
+    document_count: int
     chunks: list[Chunk]
     index: TfidfIndex
     llm_log_path: Path
@@ -43,7 +45,23 @@ def load_assistant_context(root_directory: Path) -> AssistantContext:
     documents = load_documents(root_directory / "docs")
     chunks = create_chunks(documents, 700, 120)
     index = build_tfidf_index(chunks)
-    return AssistantContext(chunks=chunks, index=index, llm_log_path=root_directory / "artifacts" / "llm_calls.jsonl")
+    return AssistantContext(
+        document_count=len(documents),
+        chunks=chunks,
+        index=index,
+        llm_log_path=root_directory / "artifacts" / "llm_calls.jsonl",
+    )
+
+
+def answer_metrics(answer: Answer, retrieval_result: RetrievalResult, validation_passed: bool) -> dict[str, int | float | bool]:
+    scores: list[float] = [chunk["score"] for chunk in retrieval_result["retrieved_chunks"]]
+    return {
+        "retrieved_chunk_count": len(scores),
+        "top_similarity_score": max(scores, default=0.0),
+        "average_similarity_score": round(sum(scores) / len(scores), 6) if scores else 0.0,
+        "citation_count": len(answer["citations"]),
+        "validation_passed": validation_passed,
+    }
 
 
 def answer_question(question: str, context: AssistantContext) -> dict[str, object]:
@@ -63,6 +81,7 @@ def answer_question(question: str, context: AssistantContext) -> dict[str, objec
         "citations": answer["citations"],
         "retrieved_chunks": retrieval_result["retrieved_chunks"],
         "validation": validation,
+        "metrics": answer_metrics(answer, retrieval_result, validation["passed"]),
     }
 
 
@@ -86,6 +105,14 @@ def create_request_handler(root_directory: Path, context: AssistantContext) -> T
             self.wfile.write(encoded_payload)
 
         def do_GET(self) -> None:
+            if self.path == "/api/status":
+                self.send_json(HTTPStatus.OK, {
+                    "document_count": context.document_count,
+                    "chunk_count": len(context.chunks),
+                    "retrieval_limit": 3,
+                    "model": MODEL_NAME,
+                })
+                return
             if self.path != "/":
                 self.send_error(HTTPStatus.NOT_FOUND, "Not found")
                 return
@@ -127,12 +154,22 @@ def create_request_handler(root_directory: Path, context: AssistantContext) -> T
     return RagRequestHandler
 
 
+def parse_port() -> int:
+    parser = ArgumentParser(description="Run the grounded knowledge-assistant UI")
+    parser.add_argument("--port", type=int, default=PORT, help="Local TCP port for the UI")
+    arguments = parser.parse_args()
+    if arguments.port < 1 or arguments.port > 65_535:
+        raise PipelineError("Port must be between 1 and 65535")
+    return arguments.port
+
+
 def main() -> None:
     root_directory: Path = Path(__file__).resolve().parent
     context: AssistantContext = load_assistant_context(root_directory)
     handler = create_request_handler(root_directory, context)
-    server = ThreadingHTTPServer((HOST, PORT), handler)
-    print(f"RAG UI ready at http://{HOST}:{PORT}")
+    port: int = parse_port()
+    server = ThreadingHTTPServer((HOST, port), handler)
+    print(f"RAG UI ready at http://{HOST}:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

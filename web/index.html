@@ -3,43 +3,84 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Local Knowledge Assistant</title>
+    <title>Grounded Knowledge Assistant</title>
     <style>
-      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #0c1020; color: #e7eaf3; }
-      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: radial-gradient(circle at top left, #1d315f, transparent 42%), #0c1020; }
-      main { width: min(780px, calc(100% - 36px)); margin: 36px 0; }
-      h1 { margin-bottom: 8px; font-size: clamp(1.8rem, 4vw, 2.7rem); }
-      .intro, .hint { color: #aeb8d4; line-height: 1.55; }
-      .card { margin-top: 24px; padding: 24px; background: #151c33; border: 1px solid #293659; border-radius: 16px; box-shadow: 0 18px 55px #0005; }
-      textarea { width: 100%; min-height: 110px; box-sizing: border-box; resize: vertical; padding: 14px; border: 1px solid #3a4b77; border-radius: 10px; background: #0d1326; color: inherit; font: inherit; }
-      button { margin-top: 12px; padding: 11px 18px; border: 0; border-radius: 9px; background: #7ba2ff; color: #0b1020; font-weight: 750; cursor: pointer; }
-      button:disabled { opacity: .55; cursor: wait; }
-      #result { margin-top: 20px; display: none; }
-      .answer { padding: 18px; background: #0d1326; border-left: 4px solid #7ba2ff; border-radius: 8px; white-space: pre-wrap; line-height: 1.55; }
-      .badge { display: inline-block; margin: 12px 6px 4px 0; padding: 4px 9px; border-radius: 999px; background: #1d3f38; color: #9ef0d5; font-size: .85rem; }
-      .unsupported { background: #513535; color: #ffb4b4; }
-      details { margin-top: 14px; padding: 12px; background: #10172c; border-radius: 8px; }
-      summary { cursor: pointer; color: #b9caff; }
-      pre { overflow-x: auto; white-space: pre-wrap; color: #c8d1ea; font-size: .85rem; }
-      #error { color: #ffb4b4; margin-top: 12px; }
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #09111d; color: #edf3ff; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 8% 0%, #193c58 0, transparent 31%), radial-gradient(circle at 93% 2%, #2b1d54 0, transparent 29%), #09111d; }
+      main { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 34px 0 52px; }
+      .eyebrow { margin: 0 0 10px; color: #8ee6d0; font-size: .78rem; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+      h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.65rem); letter-spacing: -.055em; }
+      .intro { max-width: 720px; color: #b9c7d9; font-size: 1.05rem; line-height: 1.6; }
+      .status-strip, .metrics { display: grid; gap: 12px; }
+      .status-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 27px 0; }
+      .status-card, .panel, .metric { border: 1px solid #263a4e; background: #0f1a29d9; box-shadow: 0 15px 45px #0207133d; }
+      .status-card { min-height: 90px; padding: 15px 17px; border-radius: 13px; }
+      .label { display: block; color: #8094ad; font-size: .76rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+      .status-card strong { display: block; margin-top: 7px; font-size: 1.2rem; }
+      .workspace { display: grid; grid-template-columns: minmax(285px, .78fr) minmax(0, 1.7fr); gap: 18px; align-items: start; }
+      .panel { padding: 23px; border-radius: 16px; }
+      .composer { position: sticky; top: 20px; }
+      h2 { margin: 0 0 8px; font-size: 1.08rem; }
+      .muted { color: #9dafc4; font-size: .9rem; line-height: 1.55; }
+      textarea { width: 100%; min-height: 145px; margin-top: 13px; padding: 14px; border: 1px solid #385570; border-radius: 10px; resize: vertical; background: #08131f; color: inherit; font: inherit; line-height: 1.45; }
+      textarea:focus { border-color: #74d4cf; outline: 3px solid #74d4cf23; }
+      button { width: 100%; margin-top: 12px; padding: 13px 18px; border: 0; border-radius: 10px; background: linear-gradient(105deg, #8ee6d0, #76adff); color: #071321; font-weight: 800; cursor: pointer; }
+      button:disabled { opacity: .6; cursor: wait; }
+      .shortcut { margin: 13px 0 0; color: #8094ad; font-size: .78rem; text-align: center; }
+      .shortcut kbd { padding: 2px 5px; border: 1px solid #3a4e66; border-radius: 4px; color: #b9c7d9; }
+      #error { min-height: 20px; margin: 13px 0 0; color: #ffb8bb; font-size: .88rem; }
+      .empty-state { display: grid; min-height: 415px; place-items: center; border: 1px dashed #2b465f; border-radius: 12px; color: #8fa5bd; text-align: center; padding: 30px; }
+      .empty-state span { display: block; margin-bottom: 8px; color: #cbd9ea; font-size: 1.05rem; font-weight: 700; }
+      #result { display: none; }
+      .result-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+      .answer { margin-top: 17px; padding: 20px; border: 1px solid #2e5668; border-radius: 11px; background: #0a1722; color: #eef9ff; font-size: 1.03rem; line-height: 1.62; white-space: pre-wrap; }
+      .badge { display: inline-flex; align-items: center; padding: 6px 9px; border-radius: 999px; background: #183d38; color: #9ef0d5; font-size: .78rem; font-weight: 750; white-space: nowrap; }
+      .unsupported { background: #4b2d37; color: #ffb5c0; }
+      .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 18px; }
+      .metric { min-height: 94px; padding: 13px; border-radius: 10px; }
+      .metric strong { display: block; margin-top: 6px; font-size: 1.22rem; }
+      .evidence-heading { display: flex; justify-content: space-between; align-items: baseline; margin: 25px 0 11px; }
+      .evidence-list { display: grid; gap: 10px; }
+      .evidence { padding: 15px; border: 1px solid #263e53; border-radius: 11px; background: #0a1421; }
+      .evidence-top { display: flex; justify-content: space-between; gap: 10px; color: #8ee6d0; font-size: .83rem; font-weight: 750; }
+      .evidence-id { margin-top: 7px; color: #b7c6d9; font: .78rem ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+      .evidence p { margin: 10px 0 0; color: #afbfd1; font-size: .9rem; line-height: 1.5; }
+      @media (max-width: 820px) { .status-strip, .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .workspace { grid-template-columns: 1fr; } .composer { position: static; } }
+      @media (max-width: 520px) { main { width: min(100% - 26px, 1180px); padding-top: 25px; } .status-strip, .metrics { grid-template-columns: 1fr; } .result-header { display: block; } .badge { margin-top: 10px; } }
     </style>
   </head>
   <body>
     <main>
-      <h1>Local Knowledge Assistant</h1>
-      <p class="intro">Ask a question about the local knowledge base. Every answer is generated only from retrieved documents and includes validated chunk citations.</p>
-      <section class="card">
-        <label for="question">Your question</label>
-        <textarea id="question" placeholder="For example: What happens if I exceed the rate limit?"></textarea>
-        <button id="ask" type="button">Ask the assistant</button>
-        <p id="error" role="alert"></p>
-        <section id="result" aria-live="polite">
-          <div id="answer" class="answer"></div>
-          <div id="meta"></div>
-          <details><summary>Retrieved evidence</summary><pre id="evidence"></pre></details>
+      <p class="eyebrow">Local RAG · evaluation dashboard</p>
+      <h1>Grounded Knowledge Assistant</h1>
+      <p class="intro">Ask questions against the local knowledge base. The dashboard exposes the retrieval evidence and validation signals behind every answer, so grounded behavior is easy to inspect.</p>
+      <section class="status-strip" aria-label="Knowledge base status">
+        <div class="status-card"><span class="label">Documents loaded</span><strong id="document-count">—</strong></div>
+        <div class="status-card"><span class="label">Chunks indexed</span><strong id="chunk-count">—</strong></div>
+        <div class="status-card"><span class="label">Retrieval depth</span><strong id="retrieval-limit">Top —</strong></div>
+        <div class="status-card"><span class="label">Answer model</span><strong id="model-name">—</strong></div>
+      </section>
+      <section class="workspace">
+        <aside class="panel composer">
+          <h2>Ask the knowledge base</h2>
+          <p class="muted">Only the three most relevant chunks are supplied to the model. Unsupported answers are explicitly marked.</p>
+          <textarea id="question" aria-label="Your question" placeholder="What happens if I exceed the rate limit?"></textarea>
+          <button id="ask" type="button">Retrieve and answer</button>
+          <p class="shortcut"><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to submit</p>
+          <p id="error" role="alert"></p>
+        </aside>
+        <section class="panel" aria-live="polite">
+          <div id="empty-state" class="empty-state"><div><span>Evidence first.</span>Submit a question to inspect the answer, similarity scores, citations, and source chunks.</div></div>
+          <section id="result">
+            <div class="result-header"><div><span class="label">Generated answer</span><h2>Grounded response</h2></div><span id="support-status" class="badge"></span></div>
+            <div id="answer" class="answer"></div>
+            <section id="metrics" class="metrics" aria-label="Evaluation metrics"></section>
+            <div class="evidence-heading"><div><span class="label">Retrieved evidence</span><h2>Ranked source chunks</h2></div><span id="validation-status" class="badge"></span></div>
+            <div id="evidence" class="evidence-list"></div>
+          </section>
         </section>
       </section>
-      <p class="hint">The assistant will say when the documents do not support an answer.</p>
     </main>
     <script>
       const question = document.getElementById("question");
@@ -49,6 +90,58 @@
       const answer = document.getElementById("answer");
       const meta = document.getElementById("meta");
       const evidence = document.getElementById("evidence");
+      const metrics = document.getElementById("metrics");
+      const emptyState = document.getElementById("empty-state");
+      const supportStatus = document.getElementById("support-status");
+      const validationStatus = document.getElementById("validation-status");
+
+      function scoreAsPercent(score) {
+        return `${(score * 100).toFixed(1)}%`;
+      }
+
+      function renderMetric(label, value) {
+        const card = document.createElement("div");
+        card.className = "metric";
+        const metricLabel = document.createElement("span");
+        metricLabel.className = "label";
+        metricLabel.textContent = label;
+        const metricValue = document.createElement("strong");
+        metricValue.textContent = value;
+        card.append(metricLabel, metricValue);
+        metrics.appendChild(card);
+      }
+
+      function renderEvidence(chunks) {
+        evidence.textContent = "";
+        chunks.forEach((chunk, index) => {
+          const card = document.createElement("article");
+          card.className = "evidence";
+          const top = document.createElement("div");
+          top.className = "evidence-top";
+          const rank = document.createElement("span");
+          rank.textContent = `Rank ${index + 1}`;
+          const similarity = document.createElement("span");
+          similarity.textContent = `Similarity ${scoreAsPercent(chunk.score)}`;
+          top.append(rank, similarity);
+          const identifier = document.createElement("div");
+          identifier.className = "evidence-id";
+          identifier.textContent = `${chunk.doc_id} · ${chunk.chunk_id}`;
+          const text = document.createElement("p");
+          text.textContent = chunk.text;
+          card.append(top, identifier, text);
+          evidence.appendChild(card);
+        });
+      }
+
+      async function loadStatus() {
+        const response = await fetch("/api/status");
+        if (!response.ok) throw new Error("Could not load knowledge-base status");
+        const payload = await response.json();
+        document.getElementById("document-count").textContent = payload.document_count;
+        document.getElementById("chunk-count").textContent = payload.chunk_count;
+        document.getElementById("retrieval-limit").textContent = `Top ${payload.retrieval_limit}`;
+        document.getElementById("model-name").textContent = payload.model;
+      }
 
       async function askAssistant() {
         error.textContent = "";
@@ -60,18 +153,17 @@
           const payload = await response.json();
           if (!response.ok) throw new Error(payload.error || "Request failed");
           answer.textContent = payload.answer;
-          meta.innerHTML = "";
-          const support = document.createElement("span");
-          support.className = payload.supported ? "badge" : "badge unsupported";
-          support.textContent = payload.supported ? "Supported by the knowledge base" : "Not supported by the knowledge base";
-          meta.appendChild(support);
-          for (const citation of payload.citations) {
-            const tag = document.createElement("span");
-            tag.className = "badge";
-            tag.textContent = citation;
-            meta.appendChild(tag);
-          }
-          evidence.textContent = JSON.stringify(payload.retrieved_chunks, null, 2);
+          supportStatus.className = payload.supported ? "badge" : "badge unsupported";
+          supportStatus.textContent = payload.supported ? "Supported by evidence" : "Unsupported by evidence";
+          validationStatus.className = payload.validation.passed ? "badge" : "badge unsupported";
+          validationStatus.textContent = payload.validation.passed ? "Citation validation passed" : "Citation validation failed";
+          metrics.textContent = "";
+          renderMetric("Top similarity", scoreAsPercent(payload.metrics.top_similarity_score));
+          renderMetric("Average similarity", scoreAsPercent(payload.metrics.average_similarity_score));
+          renderMetric("Evidence chunks", payload.metrics.retrieved_chunk_count);
+          renderMetric("Citations used", payload.metrics.citation_count);
+          renderEvidence(payload.retrieved_chunks);
+          emptyState.style.display = "none";
           result.style.display = "block";
         } catch (requestError) {
           error.textContent = requestError.message;
@@ -82,6 +174,7 @@
       }
       ask.addEventListener("click", askAssistant);
       question.addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") askAssistant(); });
+      loadStatus().catch((statusError) => { error.textContent = statusError.message; });
     </script>
   </body>
 </html>
