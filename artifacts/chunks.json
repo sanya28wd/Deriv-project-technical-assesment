@@ -1,0 +1,23 @@
+[
+  {
+    "chunk_id": "docs/api.md::chunk_1",
+    "doc_id": "docs/api.md",
+    "text": "# API authentication and limits\n\nThe API supports personal access tokens and OAuth 2.0 bearer tokens. Send tokens in the Authorization header.\n\nThe Starter plan permits 100 requests per minute. Requests above that limit receive an HTTP 429 response. Clients should wait and retry using exponential backoff.\n\nGraphQL subscriptions are not available on the platform.",
+    "start_char": 0,
+    "end_char": 364
+  },
+  {
+    "chunk_id": "docs/plans_and_data.md::chunk_1",
+    "doc_id": "docs/plans_and_data.md",
+    "text": "# Plans and customer data\n\nThe platform offers a free Startup plan for companies with fewer than ten employees.\n\nCustomer data deletion requests are processed within 30 days after identity verification. Immediate deletion is not available.",
+    "start_char": 0,
+    "end_char": 239
+  },
+  {
+    "chunk_id": "docs/webhooks.txt::chunk_1",
+    "doc_id": "docs/webhooks.txt",
+    "text": "Webhook delivery logs are retained for 30 days. Each failed delivery is retried up to three times before it is marked as failed.\n\nWebhook payloads are signed with an HMAC SHA-256 signature. Verify the signature before processing an event.",
+    "start_char": 0,
+    "end_char": 238
+  }
+]
