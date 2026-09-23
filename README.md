@@ -2,6 +2,41 @@
 
 A small RAG pipeline that answers questions only from local `.md` and `.txt` documents and returns validated chunk citations.
 
+## Architecture
+
+```mermaid
+flowchart TD
+    Docs["docs/*.md and docs/*.txt"] --> Ingest["Document ingestion"]
+    Ingest --> DocumentsArtifact["artifacts/documents.json"]
+    Ingest --> Chunking["Chunking\nstable IDs + offsets"]
+    Chunking --> ChunksArtifact["artifacts/chunks.json"]
+    Chunking --> Index["Local TF-IDF index"]
+
+    Questions["questions.json"] --> QuestionLoader["Question loading + schema checks"]
+    QuestionLoader --> Retrieval["Top-3 cosine-similarity retrieval"]
+    Index --> Retrieval
+    Retrieval --> RetrievalArtifact["artifacts/retrieval_results.json"]
+
+    Retrieval --> Relevance{"Relevant evidence?"}
+    Relevance -- "No: zero lexical overlap" --> Unsupported["Deterministic unavailable-information response"]
+    Relevance -- "Yes" --> LLM["OpenAI grounded answer generation\nstructured JSON + chunk citations"]
+    LLM --> LlmLog["artifacts/llm_calls.jsonl"]
+    LLM --> Answers["artifacts/answers.json"]
+    Unsupported --> Answers
+
+    Answers --> Validation["Deterministic citation + grounding validation"]
+    Validation --> ValidationArtifact["artifacts/citation_validation.json"]
+    Validation --> Final["artifacts/final_answers.json"]
+    Final --> StageTrace["artifacts/pipeline_stages.json"]
+
+    UI["Browser UI\npython3 web.py"] --> UIQuestion["User question"]
+    UIQuestion --> Retrieval
+    Validation --> Dashboard["Answer, citations, similarity scores,\nvalidation status, ranked evidence"]
+    Dashboard --> UI
+```
+
+The CLI writes each pipeline stage to `artifacts/`; the browser UI reuses the same local retrieval, grounded generation, and validation logic for interactive questions.
+
 ## Run
 
 1. Create and activate a virtual environment.
