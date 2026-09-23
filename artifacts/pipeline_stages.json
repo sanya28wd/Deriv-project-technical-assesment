@@ -1,0 +1,14 @@
+{
+  "completed_stages": [
+    "INIT",
+    "DOCUMENTS_LOADED",
+    "CHUNKS_CREATED",
+    "INDEX_BUILT",
+    "QUESTIONS_LOADED",
+    "RETRIEVAL_COMPLETE",
+    "ANSWERS_GENERATED",
+    "CITATIONS_VALIDATED",
+    "RESULTS_EXPORTED",
+    "VALIDATION_COMPLETE"
+  ]
+}

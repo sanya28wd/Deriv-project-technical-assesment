@@ -1,0 +1,63 @@
+[
+  {
+    "id": 1,
+    "question": "What authentication methods does the API support?",
+    "answer": "The API supports personal access tokens and OAuth 2.0 bearer tokens.",
+    "supported": true,
+    "citations": [
+      "docs/api.md::chunk_1"
+    ]
+  },
+  {
+    "id": 2,
+    "question": "How long are webhook delivery logs retained?",
+    "answer": "Webhook delivery logs are retained for 30 days.",
+    "supported": true,
+    "citations": [
+      "docs/webhooks.txt::chunk_1"
+    ]
+  },
+  {
+    "id": 3,
+    "question": "Is there a free plan for startups?",
+    "answer": "Yes, there is a free Startup plan for companies with fewer than ten employees.",
+    "supported": true,
+    "citations": [
+      "docs/plans_and_data.md::chunk_1"
+    ]
+  },
+  {
+    "id": 4,
+    "question": "What happens if I exceed the rate limit?",
+    "answer": "If you exceed the rate limit, the requests above that limit will receive an HTTP 429 response. Clients should wait and retry using exponential backoff.",
+    "supported": true,
+    "citations": [
+      "docs/api.md::chunk_1"
+    ]
+  },
+  {
+    "id": 5,
+    "question": "Can I delete customer data immediately on request?",
+    "answer": "Customer data deletion requests are processed within 30 days after identity verification. Immediate deletion is not available.",
+    "supported": true,
+    "citations": [
+      "docs/plans_and_data.md::chunk_1"
+    ]
+  },
+  {
+    "id": 6,
+    "question": "Does the platform support GraphQL subscriptions?",
+    "answer": "GraphQL subscriptions are not available on the platform.",
+    "supported": true,
+    "citations": [
+      "docs/api.md::chunk_1"
+    ]
+  },
+  {
+    "id": 7,
+    "question": "Which regions host the platform?",
+    "answer": "The knowledge base does not provide enough information to answer this.",
+    "supported": false,
+    "citations": []
+  }
+]

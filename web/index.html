@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Local Knowledge Assistant</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #0c1020; color: #e7eaf3; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: radial-gradient(circle at top left, #1d315f, transparent 42%), #0c1020; }
+      main { width: min(780px, calc(100% - 36px)); margin: 36px 0; }
+      h1 { margin-bottom: 8px; font-size: clamp(1.8rem, 4vw, 2.7rem); }
+      .intro, .hint { color: #aeb8d4; line-height: 1.55; }
+      .card { margin-top: 24px; padding: 24px; background: #151c33; border: 1px solid #293659; border-radius: 16px; box-shadow: 0 18px 55px #0005; }
+      textarea { width: 100%; min-height: 110px; box-sizing: border-box; resize: vertical; padding: 14px; border: 1px solid #3a4b77; border-radius: 10px; background: #0d1326; color: inherit; font: inherit; }
+      button { margin-top: 12px; padding: 11px 18px; border: 0; border-radius: 9px; background: #7ba2ff; color: #0b1020; font-weight: 750; cursor: pointer; }
+      button:disabled { opacity: .55; cursor: wait; }
+      #result { margin-top: 20px; display: none; }
+      .answer { padding: 18px; background: #0d1326; border-left: 4px solid #7ba2ff; border-radius: 8px; white-space: pre-wrap; line-height: 1.55; }
+      .badge { display: inline-block; margin: 12px 6px 4px 0; padding: 4px 9px; border-radius: 999px; background: #1d3f38; color: #9ef0d5; font-size: .85rem; }
+      .unsupported { background: #513535; color: #ffb4b4; }
+      details { margin-top: 14px; padding: 12px; background: #10172c; border-radius: 8px; }
+      summary { cursor: pointer; color: #b9caff; }
+      pre { overflow-x: auto; white-space: pre-wrap; color: #c8d1ea; font-size: .85rem; }
+      #error { color: #ffb4b4; margin-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Local Knowledge Assistant</h1>
+      <p class="intro">Ask a question about the local knowledge base. Every answer is generated only from retrieved documents and includes validated chunk citations.</p>
+      <section class="card">
+        <label for="question">Your question</label>
+        <textarea id="question" placeholder="For example: What happens if I exceed the rate limit?"></textarea>
+        <button id="ask" type="button">Ask the assistant</button>
+        <p id="error" role="alert"></p>
+        <section id="result" aria-live="polite">
+          <div id="answer" class="answer"></div>
+          <div id="meta"></div>
+          <details><summary>Retrieved evidence</summary><pre id="evidence"></pre></details>
+        </section>
+      </section>
+      <p class="hint">The assistant will say when the documents do not support an answer.</p>
+    </main>
+    <script>
+      const question = document.getElementById("question");
+      const ask = document.getElementById("ask");
+      const error = document.getElementById("error");
+      const result = document.getElementById("result");
+      const answer = document.getElementById("answer");
+      const meta = document.getElementById("meta");
+      const evidence = document.getElementById("evidence");
+
+      async function askAssistant() {
+        error.textContent = "";
+        result.style.display = "none";
+        ask.disabled = true;
+        ask.textContent = "Searching…";
+        try {
+          const response = await fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question.value }) });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || "Request failed");
+          answer.textContent = payload.answer;
+          meta.innerHTML = "";
+          const support = document.createElement("span");
+          support.className = payload.supported ? "badge" : "badge unsupported";
+          support.textContent = payload.supported ? "Supported by the knowledge base" : "Not supported by the knowledge base";
+          meta.appendChild(support);
+          for (const citation of payload.citations) {
+            const tag = document.createElement("span");
+            tag.className = "badge";
+            tag.textContent = citation;
+            meta.appendChild(tag);
+          }
+          evidence.textContent = JSON.stringify(payload.retrieved_chunks, null, 2);
+          result.style.display = "block";
+        } catch (requestError) {
+          error.textContent = requestError.message;
+        } finally {
+          ask.disabled = false;
+          ask.textContent = "Ask the assistant";
+        }
+      }
+      ask.addEventListener("click", askAssistant);
+      question.addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") askAssistant(); });
+    </script>
+  </body>
+</html>
